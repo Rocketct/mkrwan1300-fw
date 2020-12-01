@@ -1402,20 +1402,17 @@ ATEerror_t at_test_txlora(const char *param)
 
   if (1 != tiny_sscanf(buf, "%u", &nbbytes))
   {
-    AT_PRINTF("AT+TTLRA: nb bytes sent is missing");
-    return AT_PARAM_ERROR;
+     AT_PRINTF("AT+TTLRA: nb bytes sent is missing");
+     return AT_PARAM_ERROR;
   }
 
-  if (nbbytes > LORAWAN_APP_DATA_BUFF_SIZE)
-  {
-    nbbytes = LORAWAN_APP_DATA_BUFF_SIZE;
-  }
+  // if (nbbytes > LORAWAN_APP_DATA_BUFF_SIZE)
+  // {
+  //   nbbytes = LORAWAN_APP_DATA_BUFF_SIZE;
+  // }
 
 
-  TST_TX_LoraStart(buf, nbbytes);
-
-  return AT_OK;
-
+  return TST_TX_LoraStart(buf, nbbytes);
 
 }
 

@@ -139,12 +139,47 @@ void OnRxTimeout(void);
  */
 void OnRxError(void);
 
+/*!
+ * \brief Function hopping frequency change
+ */
+void OnFhssChangeChannel( uint8_t channelIndex );
 /* Functions Definition ------------------------------------------------------*/
 
 /* receive test functions */
 
-ATEerror_t TST_TxTone(const char *buf, unsigned bufSize)
-{
+
+
+ ATEerror_t TST_TxTone(const char *buf, unsigned bufSize)
+ {
+   //int k;
+//   if ((TestState & TX_TEST_TONE) != TX_TEST_TONE)
+//   {
+
+//     TestState |= TX_TEST_TONE;
+    
+//     PRINTF("Tx LORA test change status\r");
+
+
+
+//     //SX1276SetModem(MODEM_LORA);
+
+//     //Radio.SetChannel(loraParam.freqHz);
+//     //  Radio.SetTxConfig(MODEM_LORA, loraParam.power, 0, loraParam.bandwidth,
+//     //                      loraParam.sf, loraParam.codingRate,
+//     //                      LORA_PREAMBLE_LENGTH, 0,
+//     //                      true, 0, 0, 0, 10000);
+//     Radio.Write(REG_LR_MODEMCONFIG1, (Radio.Read(REG_LR_MODEMCONFIG1) & 0x0f) | (0 << 4));
+//     Radio.Write(REG_LR_MODEMCONFIG2, (Radio.Read(REG_LR_MODEMCONFIG2) | 0x08));//RF_PACKETCONFIG2_DATAMODE_MASK));
+//     // Radio.Write(REG_LR_PARAMP, (Radio.Read(REG_LR_PARAMP) & 0x9F /*| 0x20*/ ));//RF_PACKETCONFIG2_DATAMODE_MASK));
+//     //SX1276SetOpMode(RF_OPMODE_TRANSMITTER);
+
+//     return AT_OK;
+//    }
+//     else
+//     {
+//       return AT_BUSY_ERROR;
+//     }
+//  }
   uint8_t paboost = loraParam.paBoost;
 
   if ((TestState & TX_TEST_TONE) != TX_TEST_TONE)
@@ -162,7 +197,6 @@ ATEerror_t TST_TxTone(const char *buf, unsigned bufSize)
 
     // SX1276 in continuous mode FSK
     Radio.Write(REG_PACKETCONFIG2, (Radio.Read(REG_PACKETCONFIG2) & RF_PACKETCONFIG2_DATAMODE_MASK));
-
     switch (loraParam.power)
     {
       case 20:
@@ -387,6 +421,7 @@ ATEerror_t TST_stop(void)
   uint8_t rssiReg ;
   int16_t rssiValue;
 
+  PRINTF("RSSI=%d\r\n", Radio.Read(0x3e));
   if ((TestState & RX_TEST_RSSI) == RX_TEST_RSSI)
   {
     rssiReg =  Radio.Read(REG_RSSIVALUE);
@@ -409,68 +444,128 @@ ATEerror_t TST_stop(void)
 
   PRINTF("Test Stop\r\n");
   /* Set the radio in standBy*/
-  SX1276SetOpMode(RF_OPMODE_SLEEP);
+  SX1276SetOpMode(RF_OPMODE_STANDBY);
 
   return AT_OK;
 }
 
-
+const uint32_t HoppingFrequencies[] =
+{
+  902300000,
+  902500000,
+  902700000,
+  902900000,
+  903100000,
+  903300000,
+  903500000,
+  903700000,
+  903900000,
+  904100000,
+  904300000,
+  904500000,
+  904700000,
+  904900000,
+  905100000,
+  905300000,
+  905500000,
+  905700000,
+  905900000,
+  906100000,
+  906300000,
+  906500000,
+  906700000,
+  906900000,
+  907100000,
+  907300000,
+  907500000,
+  907700000,
+  907900000,
+  908100000,
+  908300000,
+  908500000,
+  908700000,
+  908900000,
+  909100000,
+  909300000,
+  909500000,
+  909700000,
+  909900000,
+  910100000,
+  910300000,
+  910500000,
+  910700000,
+  910900000,
+  911100000,
+  911300000,
+  911500000,
+  911700000,
+  911900000,
+  912100000,
+  912300000,
+  912500000,
+  912700000,
+  912900000,
+  913100000,
+  913300000,
+  913500000,
+  913700000,
+  913900000,
+  914100000,
+  914300000,
+  914500000,
+  914700000,
+  914900000
+};
 
 ATEerror_t TST_TX_LoraStart(const char *buf, unsigned bufSize)
 {
   int k;
 
-  uint8_t bufTx[] = {0x00, 0x11, 0x22, 0x33,
-                     0x44, 0x55, 0x66, 0x77,
-                     0x88, 0x99, 0xAA, 0xBB,
-                     0xCC, 0xDD, 0xEE, 0xFF
-                    };
+  uint8_t bufTx[]={0x00, 0x11, 0x22, 0x33, 
+                   0x44, 0x55, 0x66, 0x77, 
+                   0x88, 0x99, 0xAA, 0xBB, 
+                   0xCC, 0xDD, 0xEE, 0xFF,
+                   0x00, 0x11, 0x22, 0x33, 
+                   0x44, 0x55, 0x66, 0x77, 
+                   0x88, 0x99, 0xAA, 0xBB, 
+                   0xCC, 0xDD, 0xEE, 0xFF};
 
   if ((TestState & TX_TEST_LORA) != TX_TEST_LORA)
   {
 
     TestState |= TX_TEST_LORA;
-
-    PRINTF("\nTx LoRa Test\n\r");
-
-    /* Radio initialization */
+    
+    PRINTF("Tx LORA Test\r");
+    //RadioEvents.TxDone = OnTxDone;
+    SX1276SetModem(MODEM_LORA);
+   
     RadioEvents.TxDone = OnTxDone;
-    RadioEvents.RxDone = OnRxDone;
     RadioEvents.TxTimeout = OnTxTimeout;
-    RadioEvents.RxTimeout = OnRxTimeout;
-    RadioEvents.RxError = OnRxError;
-
-
-
-    /* Launch several times bufTx: nb times given by user */
-    for (k = 0; k < bufSize; k++)
-    {
-      PRINTF("Tx LoRa Test: Packet %d of %d\r\n", (k + 1), bufSize);
-
-      /* ReInit radio each time after it has been set in Sleep*/
-      Radio.Init(&RadioEvents);
-
-      Radio.SetModem(MODEM_LORA);
-
+    if(bufSize > 0) {
+   
+    RadioEvents.FhssChangeChannel = OnFhssChangeChannel;
+    Radio.Init( &RadioEvents );
+    Radio.SetChannel(HoppingFrequencies[0]);
+    Radio.SetTxConfig(MODEM_LORA, loraParam.power, 0, loraParam.bandwidth,
+                        loraParam.sf, loraParam.codingRate,
+                        LORA_PREAMBLE_LENGTH, LORA_FIX_LENGTH_PAYLOAD_ON,
+                        true, true, bufSize, LORA_IQ_INVERSION_ON, 3000);
+    Radio.Send( bufTx, sizeof(bufTx) );
+    } else {
       Radio.SetChannel(loraParam.freqHz);
-
       Radio.SetTxConfig(MODEM_LORA, loraParam.power, 0, loraParam.bandwidth,
                         loraParam.sf, loraParam.codingRate,
                         LORA_PREAMBLE_LENGTH, LORA_FIX_LENGTH_PAYLOAD_ON,
                         true, 0, 0, LORA_IQ_INVERSION_ON, 3000);
-      /* Send bufTx once*/
-      Radio.Send(bufTx, sizeof(bufTx));
 
-      /* Wait Tx done/timeout */
-      while ((RadioTXDone_flag == 0) && (RadioTXTimeout_flag == 0) && (RadioError_flag == 0)) {};
+      Radio.Write(REG_LR_MODEMCONFIG2, (Radio.Read(REG_LR_MODEMCONFIG2) | 0x08));//RF_PACKETCONFIG2_DATAMODE_MASK)); //set TX continuos mode 
 
-
-      /* Reset TX Done or timeout flags */
-      RadioTXDone_flag = 0;
-      RadioTXTimeout_flag = 0;
-      RadioError_flag = 0;
-
+      //Radio.Write(REG_LR_PARAMP, (Radio.Read(REG_LR_PARAMP) & 0x9F | 0x20 ));//RF_PACKETCONFIG2_DATAMODE_MASK));
+      //Radio.Write(REG_LR_PARAMP, (Radio.Read(REG_LR_PARAMP) & 0xF8 /*| 0x0F*/));
+      SX1276SetOpMode(RF_OPMODE_TRANSMITTER);
     }
+   
+
 
     return AT_OK;
   }
@@ -588,13 +683,13 @@ static bool is_in_list(uint32_t in, uint32_t *list, uint32_t list_len)
 void OnTxDone(void)
 {
   /* Set the radio in standBy*/
-  SX1276SetOpMode(RF_OPMODE_SLEEP);
-
-
+  //SX1276SetOpMode(RF_OPMODE_SLEEP);
+  SX1276SetSleep();
+  Radio.SetChannel( HoppingFrequencies[0] );
   /* Set TXdone flag */
   RadioTXDone_flag = 1;
 
-  PRINTF("OnTxDone\n\r");
+  PRINTF("OnTxDone\r\n");
 }
 
 void OnRxDone(uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr)
@@ -607,19 +702,20 @@ void OnRxDone(uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr)
   RadioRXDone_flag = 1;
 
   PRINTF("OnRxDone\r\n");
-  PRINTF("RssiValue=%d dBm, SnrValue=%d\n\r", rssi, snr);
+  PRINTF("RssiValue=%d dBm, SnrValue=%d\r\n", rssi, snr);
 }
 
 void OnTxTimeout(void)
 {
   /* Set the radio in standBy*/
-  SX1276SetOpMode(RF_OPMODE_SLEEP);
-
+ // SX1276SetOpMode(RF_OPMODE_SLEEP);
+  SX1276SetSleep();
 
   /* Set timeout flag */
   RadioTXTimeout_flag = 1;
 
   PRINTF("OnTxTimeout\r\n");
+
 }
 
 void OnRxTimeout(void)
@@ -644,6 +740,14 @@ void OnRxError(void)
   RadioError_flag = 1;
 
   PRINTF("OnRxError\r\n");
+}
+
+void OnFhssChangeChannel( uint8_t channelIndex )
+{
+    int r = rand() % 64;
+    channelIndex = r;
+    Radio.SetChannel( HoppingFrequencies[channelIndex] );
+    PRINTF("OnFhssChangeChannelto  %d-\r\n", channelIndex );
 }
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
